@@ -1,0 +1,91 @@
+---
+title: "Distribution of wild animals "
+output: word_document
+date: "2024-03-05"
+---
+# התקנת חבילה קריאה מקובץ אקסל
+install.packages("readxl")
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Libraries
+```{r libraries, include=TRUE,echo=TRUE}
+library(fitdistrplus)
+library(magrittr)
+library(readxl)
+```
+
+
+```{r generate}
+dataset <- read_excel(file.choose())
+
+# Convert the "datasets חיות בר" column to POSIXct format
+dataset$`חיות בר` <- as.POSIXct(dataset$`חיות בר`, format = "%Y-%m-%d %H:%M:%S")
+
+# Calculate the time difference between consecutive rows in the "datasets חיות בר" column in minutes
+time_diff <- diff(dataset$`חיות בר`, units = "mins")
+
+# Add a new column named "Time DiffMinutes" to the dataset and populate it with the time difference in minutes
+dataset$Time.DiffMinutes <- c(0, time_diff / 60)
+
+# Print the "Time DiffMinutes" column
+print(dataset$Time.DiffMinutes)
+```
+
+## First Impressions 
+
+For that we can use the following plots:
+```{r empirical plots}
+par(mfrow=c(1,3)) # defines 2 plots on the same window
+plot(dataset$Time.DiffMinutes,ylab="Sample values") # plot ( left graph )
+hist(dataset$Time.DiffMinutes, ylab="Frequency ") # histogram (right graph)
+boxplot(dataset$Time.DiffMinutes)
+```
+
+
+## According to the plots shown, we chose to check a normal distribution
+
+```{r fitting norm}
+normFit<-fitdist(dataset$Time.DiffMinutes,"norm") # fitting a normal distrbution 
+summary(normFit) # summary function displays the results 
+
+```
+The estimate are R estimates of the paramters of a normal distribution - mean and sd.
+
+```{r results="hide"}
+normFit$estimate[1]  # is the first paramter- mean
+normFit$estimate[2]  # is the second paramter- sd
+```
+
+Now we will use plotdist to plot our data versus the theoretical distribution 
+
+```{r}
+plotdist(dataset$Time.DiffMinutes,"norm",para=list(mean=normFit$estimate[1],sd=normFit$estimate[2])) 
+
+```
+
+## Now we have chosen to test an exponential distribution
+
+```{r fitting norm}
+expFit<-fitdist(dataset$Time.DiffMinutes,"exp") # fitting a exponential distrbution 
+summary(expFit) # summary function displays the results 
+
+
+```
+
+We can reach the paramter directly from code using the following:
+
+```{r results="hide"}
+expFit$estimate[1]  #rate
+```
+
+Now we will use plotdist to plot our data versus the theoretical distribution 
+
+```{r}
+plotdist(dataset$Time.DiffMinutes,"exp",para=list(rate=expFit$estimate[1])) 
+
+
+```
+
